@@ -1,0 +1,66 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Next.js Build Output
+/.next/
+/out/
+/build
+
+# Production
+/dist
+
+# Debug Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment Variables
+.env
+.env*.local
+!.env.example
+
+# macOS Metadata
+.DS_Store
+*.pem
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript Cache
+*.tsbuildinfo
+next-env.d.ts
+
+# C Compilation & Temporary Binaries
+*.o
+*.out
+*.exe
+*.obj
+a.out
+*.dSYM/
+
+# Python & Execution Service Sandbox
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
