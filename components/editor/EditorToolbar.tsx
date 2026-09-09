@@ -2,13 +2,16 @@
 
 import React from "react";
 import { ALL_MOCK_SCENARIOS } from "@/lib/execution/mock-events";
-import { FileCode, RotateCcw, ChevronDown, Sparkles } from "lucide-react";
+import { FileCode, RotateCcw, ChevronDown, Play, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EditorToolbarProps {
   currentScenarioId: string;
   onSelectScenario: (id: string) => void;
   onResetCode: () => void;
+  onRunCode?: () => void;
+  isCompiling?: boolean;
+  compileStatus?: string | null;
   currentLine: number;
   isExecuting: boolean;
 }
@@ -17,11 +20,14 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   currentScenarioId,
   onSelectScenario,
   onResetCode,
+  onRunCode,
+  isCompiling = false,
+  compileStatus = null,
   currentLine,
   isExecuting,
 }) => {
   return (
-    <div className="h-11 bg-surface-muted/90 border-b border-surface-border px-3.5 flex items-center justify-between text-xs">
+    <div className="h-11 bg-surface-muted/90 border-b border-surface-border px-3.5 flex items-center justify-between text-xs flex-wrap gap-2">
       {/* Left: Active File Tab & Execution Status */}
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-elevated border border-surface-border text-slate-200 font-mono font-medium">
@@ -36,10 +42,38 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             <span>Line {currentLine}</span>
           </div>
         )}
+
+        {compileStatus && (
+          <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+            {compileStatus}
+          </span>
+        )}
       </div>
 
-      {/* Right: Scenario Selector & Reset */}
+      {/* Right: Run Button, Scenario Selector & Reset */}
       <div className="flex items-center gap-2">
+        {onRunCode && (
+          <Button
+            size="sm"
+            onClick={onRunCode}
+            disabled={isCompiling}
+            className="h-7 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium shadow-sm transition-all text-xs gap-1.5"
+            title="Compile and visualize custom C code"
+          >
+            {isCompiling ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Compiling...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Run / Visualize</span>
+              </>
+            )}
+          </Button>
+        )}
+
         <div className="relative flex items-center">
           <label htmlFor="scenario-select" className="sr-only">Choose Scenario</label>
           <select

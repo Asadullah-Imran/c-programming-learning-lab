@@ -37,6 +37,9 @@ export default function CodeLabPage() {
     reset,
     jumpToStep,
     loadScenario,
+    executeCustomCode,
+    isCompiling,
+    compileStatus,
     hasNextStep,
     hasPrevStep,
   } = controller;
@@ -54,9 +57,9 @@ export default function CodeLabPage() {
             <span className="text-white font-semibold">{scenario.title}</span>
           </div>
           <span className="text-slate-600 hidden sm:inline">•</span>
-          <p className="text-xs text-slate-400 hidden sm:block truncate max-w-md">
+          <span className="text-xs text-slate-400 hidden sm:inline truncate max-w-md">
             {scenario.description}
-          </p>
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -64,9 +67,9 @@ export default function CodeLabPage() {
             variant={
               state.status === "completed"
                 ? "success"
-                : state.status === "running"
-                ? "int"
-                : "default"
+                : state.status === "error"
+                ? "danger"
+                : "outline"
             }
             size="sm"
           >
@@ -83,6 +86,9 @@ export default function CodeLabPage() {
             currentScenarioId={scenario.id}
             onSelectScenario={loadScenario}
             onResetCode={() => setCode(scenario.code)}
+            onRunCode={() => executeCustomCode(code)}
+            isCompiling={isCompiling}
+            compileStatus={compileStatus}
             currentLine={state.currentLine}
             isExecuting={state.currentEventIndex > 0 && state.status !== "completed"}
           />
@@ -92,7 +98,7 @@ export default function CodeLabPage() {
               code={code}
               onChange={setCode}
               currentLine={state.currentLine}
-              isReadOnly={state.currentEventIndex > 0 && state.status !== "completed"}
+              isReadOnly={isPlaying}
             />
           </div>
 

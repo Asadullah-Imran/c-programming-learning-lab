@@ -10,6 +10,8 @@ import {
   SCENARIO_VARIABLE_SWAP 
 } from "@/lib/execution/mock-events";
 
+import { executeUserCode } from "@/lib/execution/api-client";
+
 export interface ExecutionController {
   scenario: MockScenario;
   code: string;
@@ -17,6 +19,8 @@ export interface ExecutionController {
   state: ProgramState;
   history: ProgramState[];
   isPlaying: boolean;
+  isCompiling: boolean;
+  compileStatus: string | null;
   speed: number;
   setSpeed: (speed: number) => void;
   stepForward: () => void;
@@ -25,6 +29,7 @@ export interface ExecutionController {
   reset: () => void;
   jumpToStep: (stepIndex: number) => void;
   loadScenario: (scenarioId: string) => void;
+  executeCustomCode: (customCode?: string) => Promise<void>;
   hasNextStep: boolean;
   hasPrevStep: boolean;
 }
@@ -40,6 +45,8 @@ export function useExecutionController(
   const [code, setCode] = useState<string>(defaultScenario.code);
   const [speed, setSpeed] = useState<number>(1000); // 1s default
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [compileStatus, setCompileStatus] = useState<string | null>(null);
 
   // State machine snapshots
   const [state, setState] = useState<ProgramState>(() =>
@@ -178,6 +185,51 @@ export function useExecutionController(
   const hasNextStep = state.currentEventIndex < scenario.events.length;
   const hasPrevStep = history.length > 0;
 
+  // Execute user's custom C code via sandboxed compiler API
+  const executeCustomCode = useCallback(
+    async (customCode?: string) => {
+      const targetCode = customCode !== undefined ? customCode : code;
+      setIsCompiling(true);
+      setCompileStatus("Compiling with GCC...");
+      setIsPlaying(false);
+
+      try {
+        const res = await executeUserCode(targetCode);
+
+        if (res.status === "success" && res.events.length > 0) {
+          const customScenario: MockScenario = {
+            id: "custom-execution",
+            title: "Custom Code",
+            description: "User-edited C source code",
+            code: targetCode,
+            events: res.events,
+          };
+
+          setScenario(customScenario);
+          setHistory([]);
+          const initState = createInitialProgramState(res.events.length);
+          setState(initState);
+          setCompileStatus(`Compiled in ${res.compileTimeMs ?? 0}ms (${res.events.length} events)`);
+        } else if (
+          res.status === "compile_error" ||
+          res.status === "runtime_error" ||
+          res.status === "timeout"
+        ) {
+          setCompileStatus(`Error: ${res.status.replace("_", " ")}`);
+          setState((prev) => ({
+            ...prev,
+            status: "error",
+            stderr: res.stderr || res.error || "Compilation failed",
+            explanation: res.suggestion || res.error || "Execution error",
+          }));
+        }
+      } finally {
+        setIsCompiling(false);
+      }
+    },
+    [code]
+  );
+
   return {
     scenario,
     code,
@@ -185,6 +237,8 @@ export function useExecutionController(
     state,
     history,
     isPlaying,
+    isCompiling,
+    compileStatus,
     speed,
     setSpeed,
     stepForward,
@@ -193,6 +247,7 @@ export function useExecutionController(
     reset,
     jumpToStep,
     loadScenario,
+    executeCustomCode,
     hasNextStep,
     hasPrevStep,
   };
