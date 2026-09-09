@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "npx tsx tests/execution-reducer.test.ts && npx tsx tests/instrumenter.test.ts && npx tsx tests/execute-api.test.ts"
+    "test": "npx tsx tests/execution-reducer.test.ts && npx tsx tests/instrumenter.test.ts && npx tsx tests/execute-api.test.ts && npx tsx tests/practice-evaluator.test.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

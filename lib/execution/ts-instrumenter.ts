@@ -135,6 +135,21 @@ export class CInstrumenter {
         continue;
       }
 
+      // Else-if condition: e.g. "} else if (marks == 90) {" or "else if (marks == 90) {"
+      const elseIfMatch = trimmed.match(/^(?:}\s*)?else\s+if\s*\((.*)\)\s*(\{?)$/);
+      if (elseIfMatch) {
+        const condExpr = elseIfMatch[1].trim();
+        const trailing = elseIfMatch[2] || "";
+        const escapedCond = condExpr.replace(/"/g, '\\"');
+        const leadingBrace = trimmed.startsWith("}") ? "} " : "";
+
+        outputLines.push(`    __trace_line(${originalLineNum});`);
+        outputLines.push(
+          `    ${leadingBrace}else if (__trace_cond(${originalLineNum}, "${escapedCond}", (${condExpr}), "then")) ${trailing}`
+        );
+        continue;
+      }
+
       // Condition: e.g. "if (marks >= 80)"
       const ifMatch = trimmed.match(/^if\s*\((.*)\)\s*(\{?)$/);
       if (ifMatch) {
@@ -172,7 +187,18 @@ export class CInstrumenter {
         continue;
       }
 
-      // Plain statements (e.g. printf, function calls, empty lines)
+      // Printf call: capture formatted output into trace event
+      if (trimmed.startsWith("printf(") && trimmed.endsWith(";")) {
+        outputLines.push(`    __trace_line(${originalLineNum});`);
+        outputLines.push(`    ${rawLine.trim()}`);
+        const innerArgs = trimmed.slice(7, -2);
+        outputLines.push(
+          `    { char __trace_buf[1024]; snprintf(__trace_buf, sizeof(__trace_buf), ${innerArgs}); __trace_output(__trace_buf); }`
+        );
+        continue;
+      }
+
+      // Plain statements (e.g. function calls, braces, empty lines)
       if (trimmed.length > 0 && !trimmed.startsWith("//") && !trimmed.startsWith("#") && trimmed !== "{" && trimmed !== "}") {
         outputLines.push(`    __trace_line(${originalLineNum});`);
       }
