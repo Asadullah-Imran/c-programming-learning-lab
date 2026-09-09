@@ -47,9 +47,9 @@ export default function CodeLabPage() {
   const variableEntries = Object.values(state.variables);
 
   return (
-    <div className="flex flex-col flex-1 h-[calc(100vh-4rem)] overflow-hidden bg-background">
+    <div className="flex flex-col flex-1 h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden bg-background">
       {/* Top Breadcrumb & Scenario Header */}
-      <div className="h-12 border-b border-surface-border bg-surface-muted/60 px-4 sm:px-6 flex items-center justify-between">
+      <div className="h-12 shrink-0 border-b border-surface-border bg-surface-muted/60 px-4 sm:px-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-xs">
             <span className="text-slate-400">Code Lab</span>
@@ -79,21 +79,23 @@ export default function CodeLabPage() {
       </div>
 
       {/* Main Split-Screen Workspace */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        {/* Left Column: Editor & Terminal Console (5 Cols) */}
-        <div className="lg:col-span-6 xl:col-span-5 border-b lg:border-b-0 lg:border-r border-surface-border flex flex-col h-full bg-[#070B12]">
-          <EditorToolbar
-            currentScenarioId={scenario.id}
-            onSelectScenario={loadScenario}
-            onResetCode={() => setCode(scenario.code)}
-            onRunCode={() => executeCustomCode(code)}
-            isCompiling={isCompiling}
-            compileStatus={compileStatus}
-            currentLine={state.currentLine}
-            isExecuting={state.currentEventIndex > 0 && state.status !== "completed"}
-          />
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden min-h-0 max-h-[calc(100%-3rem)]">
+        {/* Left Column: Editor & Pinned Bottom Terminal Console (5 Cols) */}
+        <div className="lg:col-span-6 xl:col-span-5 border-b lg:border-b-0 lg:border-r border-surface-border flex flex-col h-full max-h-full bg-[#070B12] overflow-hidden min-h-0">
+          <div className="shrink-0">
+            <EditorToolbar
+              currentScenarioId={scenario.id}
+              onSelectScenario={loadScenario}
+              onResetCode={() => setCode(scenario.code)}
+              onRunCode={() => executeCustomCode(code)}
+              isCompiling={isCompiling}
+              compileStatus={compileStatus}
+              currentLine={state.currentLine}
+              isExecuting={state.currentEventIndex > 0 && state.status !== "completed"}
+            />
+          </div>
 
-          <div className="flex-1 min-h-[260px] overflow-hidden">
+          <div className="flex-1 min-h-0 relative overflow-hidden">
             <CodeEditor
               code={code}
               onChange={setCode}
@@ -102,13 +104,13 @@ export default function CodeLabPage() {
             />
           </div>
 
-          <div className="p-3 border-t border-surface-border bg-surface-muted/30">
+          <div className="shrink-0 p-3 border-t border-surface-border bg-surface-muted/30">
             <ConsoleOutput stdout={state.stdout} stderr={state.stderr} onClear={reset} />
           </div>
         </div>
 
         {/* Right Column: Execution Controller & Notional Machine Visualizer (7 Cols) */}
-        <div className="lg:col-span-6 xl:col-span-7 flex flex-col h-full overflow-y-auto bg-surface/40 p-4 sm:p-6 gap-5">
+        <div className="lg:col-span-6 xl:col-span-7 flex flex-col h-full max-h-full overflow-y-auto bg-surface/40 p-4 sm:p-6 gap-5 min-h-0">
           {/* Playback Controls Toolbar */}
           <PlaybackControls
             currentStep={state.currentEventIndex}
