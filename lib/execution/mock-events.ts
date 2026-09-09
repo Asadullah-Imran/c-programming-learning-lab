@@ -393,7 +393,7 @@ int main() {
     {
       id: 4,
       type: "function_call",
-      line: 8,
+      line: 2,
       payload: {
         functionName: "add",
         callLine: 8,
@@ -406,7 +406,7 @@ int main() {
     {
       id: 5,
       type: "function_return",
-      line: 2,
+      line: 8,
       payload: {
         functionName: "add",
         returnLine: 8,
