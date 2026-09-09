@@ -40,6 +40,8 @@ export class CInstrumenter {
       const rawLine = lines[i];
       const trimmed = rawLine.trim();
 
+      outputLines.push(`#line ${originalLineNum} "main.c"`);
+
       // Check for main entry point
       if (/int\s+main\s*\([^)]*\)\s*\{?/.test(trimmed)) {
         inMain = true;

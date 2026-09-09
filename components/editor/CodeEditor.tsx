@@ -1,14 +1,20 @@
 "use client";
 
+// ==============================================================================
+// ICS C Programming Learning Lab — Monaco Code Editor Component
+// ==============================================================================
+
 import React, { useRef, useEffect } from "react";
 import Editor, { Monaco, OnMount } from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
+import { CompileErrorInfo } from "@/types/execution";
 
 interface CodeEditorProps {
   code: string;
   onChange?: (newCode: string) => void;
   currentLine?: number;
   isReadOnly?: boolean;
+  compileError?: CompileErrorInfo | null;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -16,6 +22,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onChange,
   currentLine = 1,
   isReadOnly = false,
+  compileError = null,
 }) => {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
@@ -60,7 +67,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
     if (!editor || !monaco) return;
 
-    if (currentLine && currentLine > 0) {
+    if (currentLine && currentLine > 0 && !compileError) {
       // Reveal line smoothly
       editor.revealLineInCenterIfOutsideViewport(currentLine);
 
@@ -75,11 +82,69 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           },
         },
       ]);
-    } else {
+    } else if (!compileError) {
       // Clear decorations if no active line
       decorationsRef.current = editor.deltaDecorations(decorationsRef.current, []);
     }
-  }, [currentLine]);
+  }, [currentLine, compileError]);
+
+  // Synchronize Compiler / Syntax Errors with Monaco Model Markers (Red squiggly underlines)
+  useEffect(() => {
+    const editor = editorRef.current;
+    const monaco = monacoRef.current;
+
+    if (!editor || !monaco) return;
+    const model = editor.getModel();
+    if (!model) return;
+
+    if (compileError) {
+      const totalLines = model.getLineCount();
+      const errLine = Math.min(Math.max(1, compileError.line || 1), Math.max(1, totalLines));
+      const lineLength = model.getLineLength(errLine) || 100;
+      const errCol = Math.min(Math.max(1, compileError.column || 1), lineLength + 1);
+
+      // Reveal error line
+      editor.revealLineInCenter(errLine);
+
+      // Set Red Squiggly Error Markers in Monaco
+      monaco.editor.setModelMarkers(model, "c-compiler", [
+        {
+          startLineNumber: errLine,
+          startColumn: errCol,
+          endLineNumber: errLine,
+          endColumn: lineLength + 1,
+          message: `${compileError.message}\n💡 Hint: ${compileError.suggestion || "Check syntax on this line."}`,
+          severity: monaco.MarkerSeverity.Error,
+        },
+      ]);
+
+      // Set gutter error glyph decoration
+      decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [
+        {
+          range: new monaco.Range(errLine, 1, errLine, 1),
+          options: {
+            isWholeLine: true,
+            className: "bg-rose-950/40 border-l-2 border-rose-500",
+            glyphMarginClassName: "active-glyph-error",
+          },
+        },
+      ]);
+    } else {
+      // Clear markers when no error
+      monaco.editor.setModelMarkers(model, "c-compiler", []);
+    }
+  }, [compileError]);
+
+  const handleCodeChange = (newVal: string) => {
+    // Clear compiler markers when student edits code
+    if (editorRef.current && monacoRef.current) {
+      const model = editorRef.current.getModel();
+      if (model) {
+        monacoRef.current.editor.setModelMarkers(model, "c-compiler", []);
+      }
+    }
+    onChange?.(newVal);
+  };
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-[#070B12]">
@@ -91,7 +156,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         value={code}
         beforeMount={handleEditorWillMount}
         onMount={handleEditorDidMount}
-        onChange={(val) => onChange?.(val || "")}
+        onChange={(val) => handleCodeChange(val || "")}
         options={{
           readOnly: isReadOnly,
           minimap: { enabled: false },

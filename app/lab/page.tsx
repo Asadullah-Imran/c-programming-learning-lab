@@ -101,6 +101,7 @@ export default function CodeLabPage() {
               onChange={setCode}
               currentLine={state.currentLine}
               isReadOnly={isPlaying}
+              compileError={state.compileError}
             />
           </div>
 

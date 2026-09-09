@@ -68,3 +68,14 @@ body {
   animation: activeLinePulse 2s ease-in-out infinite;
   border-left: 3px solid #38bdf8;
 }
+
+.active-glyph-error {
+  background: #f43f5e;
+  border-radius: 50%;
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: 5px;
+  margin-top: 6px;
+  box-shadow: 0 0 8px #f43f5e;
+}
+

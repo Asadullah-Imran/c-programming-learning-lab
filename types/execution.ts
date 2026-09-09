@@ -151,6 +151,13 @@ export interface ExplanationEntry {
   detail: string;
 }
 
+export interface CompileErrorInfo {
+  line?: number;
+  column?: number;
+  message: string;
+  suggestion?: string;
+}
+
 // Complete Immutable Program State at step t
 export interface ProgramState {
   status: "idle" | "running" | "paused" | "completed" | "error";
@@ -166,4 +173,5 @@ export interface ProgramState {
   explanationHistory: ExplanationEntry[];
   currentEventIndex: number;
   totalEvents: number;
+  compileError?: CompileErrorInfo | null;
 }

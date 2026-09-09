@@ -208,6 +208,7 @@ export function useExecutionController(
           setScenario(customScenario);
           setHistory([]);
           const initState = createInitialProgramState(res.events.length);
+          initState.compileError = null;
           setState(initState);
           setCompileStatus(`Compiled in ${res.compileTimeMs ?? 0}ms (${res.events.length} events)`);
         } else if (
@@ -219,8 +220,15 @@ export function useExecutionController(
           setState((prev) => ({
             ...prev,
             status: "error",
+            currentLine: res.errorLine ?? prev.currentLine,
             stderr: res.stderr || res.error || "Compilation failed",
             explanation: res.suggestion || res.error || "Execution error",
+            compileError: {
+              line: res.errorLine,
+              column: res.errorColumn,
+              message: res.stderr || res.error || "Compilation error",
+              suggestion: res.suggestion,
+            },
           }));
         }
       } finally {

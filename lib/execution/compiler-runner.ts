@@ -15,6 +15,8 @@ export interface ExecutionResponse {
   stderr: string;
   error?: string;
   suggestion?: string;
+  errorLine?: number;
+  errorColumn?: number;
   compileTimeMs?: number;
   runTimeMs?: number;
 }
@@ -22,7 +24,10 @@ export interface ExecutionResponse {
 /**
  * Translates GCC/Clang compiler errors into beginner-friendly pedagogical advice.
  */
-function translateCompilerError(rawError: string): { message: string; suggestion: string } {
+function translateCompilerError(
+  rawError: string,
+  wasAutoWrapped: boolean = false
+): { message: string; suggestion: string; line?: number; column?: number } {
   let suggestion = "Double-check your syntax around the indicated line.";
   
   if (rawError.includes("expected ';'")) {
@@ -39,13 +44,26 @@ function translateCompilerError(rawError: string): { message: string; suggestion
     suggestion = "Array Assignment: In C, you cannot assign entire arrays directly with `=` after declaration. Use loops or `strcpy`.";
   }
 
+  // Extract line and column numbers from compiler output
+  // e.g. /tmp/.../main.c:4:5: error: expected ';'
+  let line: number | undefined;
+  let column: number | undefined;
+  const lineMatch = rawError.match(/(?:main\.c|Line)\s*:?(\d+)(?::(\d+))?/i);
+  if (lineMatch) {
+    const parsedLine = parseInt(lineMatch[1], 10);
+    line = wasAutoWrapped ? Math.max(1, parsedLine - 1) : parsedLine;
+    if (lineMatch[2]) {
+      column = parseInt(lineMatch[2], 10);
+    }
+  }
+
   // Clean up paths from message
   const cleanedError = rawError
     .replace(/\/.*?\/main\.c:/g, "Line ")
     .replace(/\/.*?\/tracer\.c:/g, "tracer: ")
     .trim();
 
-  return { message: cleanedError, suggestion };
+  return { message: cleanedError, suggestion, line, column };
 }
 
 export const compileAndRunC = executeSandboxedC;
@@ -62,7 +80,8 @@ export async function executeSandboxedC(
 
   // If student code doesn't wrap in main(), auto-wrap it for novice convenience
   let normalizedCode = sourceCode.trim();
-  if (!normalizedCode.includes("main(") && !normalizedCode.includes("main ()")) {
+  const wasAutoWrapped = !normalizedCode.includes("main(") && !normalizedCode.includes("main ()");
+  if (wasAutoWrapped) {
     normalizedCode = `int main() {\n${normalizedCode}\n    return 0;\n}`;
   }
 
@@ -93,7 +112,7 @@ export async function executeSandboxedC(
       );
     } catch (compileErr: any) {
       const rawStderr = compileErr.stderr || compileErr.message || "Compilation failed";
-      const { message, suggestion } = translateCompilerError(rawStderr);
+      const { message, suggestion, line, column } = translateCompilerError(rawStderr, wasAutoWrapped);
 
       return {
         status: "compile_error",
@@ -101,14 +120,16 @@ export async function executeSandboxedC(
           {
             id: 1,
             type: "compile_error",
-            line: 1,
-            payload: { message, suggestion },
+            line: line ?? 1,
+            payload: { message, suggestion, line, column },
           },
         ],
         stdout: "",
         stderr: message,
         error: message,
         suggestion,
+        errorLine: line,
+        errorColumn: column,
         compileTimeMs: Date.now() - compileStart,
       };
     }
