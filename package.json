@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "npx tsx tests/execution-reducer.test.ts && npx tsx tests/instrumenter.test.ts && npx tsx tests/execute-api.test.ts && npx tsx tests/practice-evaluator.test.ts"
+    "test": "npx tsx tests/execution-reducer.test.ts && npx tsx tests/instrumenter.test.ts && npx tsx tests/execute-api.test.ts && npx tsx tests/practice-evaluator.test.ts && npx tsx tests/curriculum.test.ts && npx tsx tests/database-progress.test.ts && npx tsx tests/security-sandbox.test.ts && npx tsx tests/e2e-workflow.test.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.116.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.453.0",
     "next": "^14.2.15",

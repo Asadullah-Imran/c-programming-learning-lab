@@ -48,6 +48,8 @@ function translateCompilerError(rawError: string): { message: string; suggestion
   return { message: cleanedError, suggestion };
 }
 
+export const compileAndRunC = executeSandboxedC;
+
 /**
  * Sandboxed C compiler and process runner.
  */

@@ -79,11 +79,13 @@ export const Navbar = () => {
         </nav>
 
         {/* Right CTA */}
-        <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Phase 1 Active</span>
-          </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/login"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <span>Sign In</span>
+          </Link>
 
           <Link href="/lab">
             <Button size="sm" variant="glow" className="gap-1.5 text-xs">

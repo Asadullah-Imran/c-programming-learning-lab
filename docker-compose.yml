@@ -1,0 +1,60 @@
+version: '3.8'
+
+# ==============================================================================
+# ICS C Programming Learning Lab — Docker Compose Multi-Tier Architecture
+# ==============================================================================
+
+services:
+  # 1. Next.js Web Frontend & API Gateway
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ics-c-lab-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - EXECUTION_SERVICE_URL=http://execution-service:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+    depends_on:
+      execution-service:
+        condition: service_healthy
+    networks:
+      - c-lab-network
+
+  # 2. Sandboxed C Execution & Instrumentation Service
+  execution-service:
+    build:
+      context: ./execution-service
+      dockerfile: Dockerfile
+    container_name: ics-c-lab-execution-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MAX_TIMEOUT_SECONDS=2
+      - MAX_MEMORY_MB=128
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    # Resource limits to prevent runaway fork bombs
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+    networks:
+      - c-lab-network
+
+networks:
+  c-lab-network:
+    driver: bridge
