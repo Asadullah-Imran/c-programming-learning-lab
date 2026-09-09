@@ -82,18 +82,29 @@ console.log("🧪 Starting Execution Reducer Unit Tests...\n");
   let state = createInitialProgramState(SCENARIO_FUNCTION_CALL.events.length);
 
   let maxStackDepth = 0;
+  let detectedParameters: unknown[] = [];
+  let capturedReturn: unknown = null;
+
   for (const event of SCENARIO_FUNCTION_CALL.events) {
     state = executionReducer(state, event);
     if (state.callStack.length > maxStackDepth) {
       maxStackDepth = state.callStack.length;
+      if (state.callStack[1]?.parameters) {
+        detectedParameters = state.callStack[1].parameters;
+      }
+    }
+    if (event.type === "function_return") {
+      capturedReturn = state.lastFunctionReturn;
     }
   }
 
   assert.strictEqual(maxStackDepth, 2, "Max stack depth must reach 2 during add() invocation");
+  assert.strictEqual(detectedParameters.length, 2, "Parameters a and b must be captured in stack frame");
+  assert.deepStrictEqual(capturedReturn, { functionName: "add", returnValue: 9, returnLine: 8 }, "Return value must be captured on function_return");
   assert.strictEqual(state.callStack.length, 1, "Call stack must return to depth 1 (main) after return");
   assert.strictEqual(state.variables.result.value, 9, "Result variable must equal 9");
   assert.strictEqual(state.stdout, "Result: 9\n", "Stdout must contain 'Result: 9\\n'");
-  console.log("  ✓ Passed: Call stack push/pop and parameter passing verified.");
+  console.log("  ✓ Passed: Call stack push/pop, parameter pass-by-value, and return value bubbling verified.");
 }
 
 console.log("\n🎉 ALL 5 UNIT TESTS PASSED SUCCESSFULLY!");

@@ -7,6 +7,7 @@ import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { PlaybackControls } from "@/components/execution/PlaybackControls";
 import { ConsoleOutput } from "@/components/execution/ConsoleOutput";
 import { VisualizationContainer } from "@/components/visualization/VisualizationContainer";
+import { CallStackVisualizer } from "@/components/visualization/CallStackVisualizer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { 
@@ -118,40 +119,14 @@ export default function CodeLabPage() {
             hasPrev={hasPrevStep}
           />
 
-          {/* Visualizer Shell: Variables, Memory Layout, and Why? Timeline */}
+          {/* Visualizer Shell: Variables, Memory Layout, Control Flow, Call Stack, and Why? Timeline */}
           <VisualizationContainer state={state} />
 
-          {/* Call Stack Section */}
-          <Card className="mt-2 bg-surface/60 border-surface-border">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-purple-400" />
-                  <CardTitle className="text-sm font-semibold">Call Stack Activation Frames</CardTitle>
-                </div>
-                <span className="text-xs font-mono text-purple-400">
-                  Depth: {state.callStack.length}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {state.callStack.map((frame, idx) => (
-                <div
-                  key={frame.id}
-                  className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/25 flex items-center justify-between text-xs font-mono"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-purple-300 font-bold bg-purple-500/20 px-2 py-0.5 rounded">#{idx}</span>
-                    <span className="text-white font-semibold text-sm">{frame.functionName}()</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-400">Invoked at line {frame.callLine}</span>
-                    <Badge variant="purple" size="sm">Active Frame</Badge>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          {/* Dedicated Runtime Call Stack Inspector */}
+          <CallStackVisualizer
+            callStack={state.callStack}
+            lastFunctionReturn={state.lastFunctionReturn}
+          />
         </div>
       </div>
     </div>

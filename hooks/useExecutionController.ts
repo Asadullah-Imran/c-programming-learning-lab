@@ -119,6 +119,22 @@ export function useExecutionController(
     setState(createInitialProgramState(selected.events.length));
   }, []);
 
+  // Support ?scenario= query parameter on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const scenarioParam = params.get("scenario");
+      if (scenarioParam) {
+        const matched = ALL_MOCK_SCENARIOS.find(
+          (s) => s.id === scenarioParam || s.id.includes(scenarioParam)
+        );
+        if (matched) {
+          loadScenario(matched.id);
+        }
+      }
+    }
+  }, [loadScenario]);
+
   // Auto-play interval effect
   useEffect(() => {
     if (isPlaying) {

@@ -5,7 +5,8 @@ import {
   CDataType,
   StackFrame,
   ConditionState,
-  LoopState
+  LoopState,
+  FunctionReturnState,
 } from "@/types/execution";
 import { generateExplanation } from "./explanation-generator";
 
@@ -62,7 +63,15 @@ export function executionReducer(
   let nextStderr = state.stderr;
   let nextActiveCondition: ConditionState | null = state.activeCondition;
   let nextActiveLoop: LoopState | null = state.activeLoop;
+  let nextLastFunctionReturn: FunctionReturnState | null = state.lastFunctionReturn;
   let nextCallStack: StackFrame[] = [...state.callStack];
+
+  // Clear return bubble when moving away from return line or on new call
+  if (event.type === "function_call" || event.type === "program_start") {
+    nextLastFunctionReturn = null;
+  } else if (nextLastFunctionReturn && line !== nextLastFunctionReturn.returnLine && event.type !== "variable_create") {
+    nextLastFunctionReturn = null;
+  }
 
   switch (event.type) {
     case "program_start": {
@@ -148,7 +157,7 @@ export function executionReducer(
         expression: String(p.expression ?? ""),
         substitutedExpression: p.substitutedExpression ? String(p.substitutedExpression) : undefined,
         result: Boolean(p.result),
-        branchTaken: p.branch === "then" ? "then" : p.branch === "else" ? "else" : null,
+        branchTaken: (p.branch as "then" | "else" | null) ?? null,
       };
       break;
     }
@@ -163,7 +172,7 @@ export function executionReducer(
       nextActiveLoop = {
         line,
         loopType: (p.loopType as "for" | "while" | "do-while") || "for",
-        iteration: Number(p.iteration ?? 1),
+        iteration: Number(p.iteration) || 1,
         conditionExpression: p.conditionExpression ? String(p.conditionExpression) : undefined,
         isConditionMet: p.isConditionMet !== undefined ? Boolean(p.isConditionMet) : true,
       };
@@ -177,15 +186,20 @@ export function executionReducer(
 
     case "function_call": {
       const fnName = String(p.functionName ?? "func");
+      const callSiteLine = Number(p.callLine) || line;
+      const deterministicId = `frame-${fnName}-${nextCallStack.length + 1}`;
+      
       const newFrame: StackFrame = {
-        id: `frame-${fnName}-${Date.now()}`,
+        id: deterministicId,
         functionName: fnName,
-        callLine: line,
+        callLine: callSiteLine,
         variables: {},
+        parameters: [],
       };
 
       // Populate arguments if provided
       if (Array.isArray(p.arguments)) {
+        const params: Array<{ name: string; value: string | number | boolean; type: CDataType; originalArg?: string }> = [];
         p.arguments.forEach((arg, idx) => {
           const argVar: VariableState = {
             name: arg.name,
@@ -198,7 +212,14 @@ export function executionReducer(
           };
           newFrame.variables[arg.name] = argVar;
           updatedVariables[`${fnName}::${arg.name}`] = argVar;
+          params.push({
+            name: arg.name,
+            value: arg.value,
+            type: arg.type || "int",
+            originalArg: arg.originalArg,
+          });
         });
+        newFrame.parameters = params;
       }
 
       nextCallStack = [...nextCallStack, newFrame];
@@ -207,6 +228,16 @@ export function executionReducer(
 
     case "function_return": {
       if (nextCallStack.length > 1) {
+        const topFrame = nextCallStack[nextCallStack.length - 1];
+        const retVal = p.returnValue !== undefined ? (p.returnValue as string | number | boolean | null) : null;
+        const returnLine = Number(p.returnLine) || topFrame.callLine;
+
+        nextLastFunctionReturn = {
+          functionName: topFrame.functionName,
+          returnValue: retVal,
+          returnLine,
+        };
+
         nextCallStack = nextCallStack.slice(0, -1);
       }
       break;
@@ -243,6 +274,7 @@ export function executionReducer(
     callStack: nextCallStack,
     activeCondition: nextActiveCondition,
     activeLoop: nextActiveLoop,
+    lastFunctionReturn: nextLastFunctionReturn,
     stdout: nextStdout,
     stderr: nextStderr,
     explanation: explanationEntry.detail,

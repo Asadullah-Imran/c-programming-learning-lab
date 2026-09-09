@@ -113,7 +113,16 @@ export interface StackFrame {
   functionName: string;
   callLine: number;
   returnLine?: number;
+  returnValue?: string | number | boolean | null;
+  parameters?: Array<{ name: string; value: string | number | boolean; type: CDataType; originalArg?: string }>;
   variables: Record<string, VariableState>;
+}
+
+// Function Return Record (for bubbling return values to call site)
+export interface FunctionReturnState {
+  functionName: string;
+  returnValue: string | number | boolean | null;
+  returnLine: number;
 }
 
 // Condition State (for if / else branching)
@@ -150,6 +159,7 @@ export interface ProgramState {
   callStack: StackFrame[];
   activeCondition: ConditionState | null;
   activeLoop: LoopState | null;
+  lastFunctionReturn: FunctionReturnState | null;
   stdout: string;
   stderr: string;
   explanation: string | null;

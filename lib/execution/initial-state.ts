@@ -18,6 +18,7 @@ export function createInitialProgramState(totalEvents: number = 0): ProgramState
     ],
     activeCondition: null,
     activeLoop: null,
+    lastFunctionReturn: null,
     stdout: "",
     stderr: "",
     explanation: "Program initialized. Ready to execute.",

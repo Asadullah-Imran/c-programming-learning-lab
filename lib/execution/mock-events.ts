@@ -398,8 +398,8 @@ int main() {
         functionName: "add",
         callLine: 8,
         arguments: [
-          { name: "a", value: 4, type: "int" },
-          { name: "b", value: 5, type: "int" },
+          { name: "a", value: 4, type: "int", originalArg: "x" },
+          { name: "b", value: 5, type: "int", originalArg: "y" },
         ],
       },
     },
